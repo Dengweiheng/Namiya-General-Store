@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}个人资料管理 - 解忧杂货铺{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card custom-card p-4 shadow-lg">
+            <h3 class="fw-bold mb-4 d-flex align-items-center">
+                <i class="bi bi-person-badge text-accent me-2" style="color: var(--accent-color);"></i>
+                个人资料与主题管理
+            </h3>
+            
+            <form action="{{ url_for('profile') }}" method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <!-- 左侧：头像展示与上传 -->
+                    <div class="col-md-4 text-center mb-4 border-end-md">
+                        <div class="mb-3">
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar }}" alt="用户头像" class="rounded-circle img-thumbnail shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <!-- 默认占位头像 -->
+                                <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center text-white font-monospace shadow-sm" style="width: 120px; height: 120px; font-size: 3rem;">
+                                    {{ user.nickname[0] | upper if user.nickname else '?' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="avatar" class="form-label btn btn-sm btn-outline-secondary px-3 cursor-pointer">
+                                <i class="bi bi-camera-fill me-1"></i> 上传新头像
+                            </label>
+                            <input class="form-control d-none" type="file" id="avatar" name="avatar" accept="image/*" onchange="previewImage(this)">
+                            <div class="text-muted small mt-1">支持 png, jpg, jpeg, gif 格式</div>
+                        </div>
+                        <!-- 头像即时预览 -->
+                        <div id="image-preview-container" class="d-none mb-3">
+                            <span class="badge bg-info mb-1">预览新头像:</span><br>
+                            <img id="avatar-preview" src="#" alt="新头像预览" class="rounded-circle img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧：基本信息与主题配置 -->
+                    <div class="col-md-8">
+                        <!-- 用户名（只读） -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">系统账号名（不可更改）</label>
+                            <input type="text" class="form-control bg-light border-color" value="{{ user.username }}" readonly>
+                        </div>
+                        
+                        <!-- 邮箱（只读） -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">注册邮箱</label>
+                            <input type="text" class="form-control bg-light border-color" value="{{ user.email }}" readonly>
+                        </div>
+                        
+                        <!-- 昵称编辑 -->
+                        <div class="mb-4">
+                            <label for="nickname" class="form-label small fw-semibold">聊天昵称（用于对话与树洞）</label>
+                            <input type="text" class="form-control border-color" id="nickname" name="nickname" value="{{ user.nickname or '' }}" required>
+                        </div>
+                        
+                        <!-- 动态主题切换组件 -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold d-block">界面主题选择 (点击实时体验)</label>
+                            <div class="row g-2">
+                                <!-- 温馨主题 -->
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="theme" id="theme-warm-radio" value="warm" {% if user.theme == 'warm' %}checked{% endif %} onclick="switchLiveTheme('warm')">
+                                    <label class="btn btn-outline-secondary w-100 py-3 text-center d-flex flex-column align-items-center justify-content-center" for="theme-warm-radio">
+                                        <span class="theme-preview-box preview-warm mb-2"></span>
+                                        <span class="small fw-semibold">温馨治愈</span>
+                                    </label>
+                                </div>
+                                <!-- 现代主题 -->
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="theme" id="theme-sleek-radio" value="sleek" {% if user.theme == 'sleek' %}checked{% endif %} onclick="switchLiveTheme('sleek')">
+                                    <label class="btn btn-outline-secondary w-100 py-3 text-center d-flex flex-column align-items-center justify-content-center" for="theme-sleek-radio">
+                                        <span class="theme-preview-box preview-sleek mb-2"></span>
+                                        <span class="small fw-semibold">美观现代</span>
+                                    </label>
+                                </div>
+                                <!-- 极简主题 -->
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="theme" id="theme-minimalist-radio" value="minimalist" {% if user.theme == 'minimalist' %}checked{% endif %} onclick="switchLiveTheme('minimalist')">
+                                    <label class="btn btn-outline-secondary w-100 py-3 text-center d-flex flex-column align-items-center justify-content-center" for="theme-minimalist-radio">
+                                        <span class="theme-preview-box preview-minimalist mb-2"></span>
+                                        <span class="small fw-semibold">简洁极简</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="border-color my-4">
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-accent px-4 py-2 fw-semibold">
+                                <i class="bi bi-save2-fill me-1"></i> 保存并应用所有修改
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 新增模块：定制专属数字分身 -->
+        <div class="card custom-card p-4 shadow-lg mt-4">
+            <h3 class="fw-bold mb-4 d-flex align-items-center justify-content-between">
+                <span>
+                    <i class="bi bi-robot text-accent me-2" style="color: var(--accent-color);"></i>
+                    我的定制化数字分身
+                </span>
+                <button class="btn btn-sm btn-accent" onclick="openAddModal()">
+                    <i class="bi bi-plus-circle-fill me-1"></i> 定制新分身
+                </button>
+            </h3>
+
+            <div class="row g-3">
+                {% if custom_roles %}
+                    {% for role in custom_roles %}
+                        <div class="col-md-6" id="char-card-{{ role.id }}">
+                            <div class="card p-3 border border-color h-100 d-flex flex-column justify-content-between" style="background-color: var(--bg-hover);">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-circle text-accent me-1"></i>{{ role.name }}</h6>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border small">{{ '女声' if role.gender == 'female' else '男声' }}</span>
+                                    </div>
+                                    <!-- 真实人设 Prompt，用于 JS 取用，防止换行多行 JavaScript 崩溃 -->
+                                    <div class="d-none raw-prompt-content">{{ role.prompt }}</div>
+                                    <p class="text-secondary small mb-2 text-truncate-3" style="max-height: 54px; overflow: hidden; line-height: 1.4;">
+                                        {{ role.prompt }}
+                                    </p>
+                                    <div class="small text-muted" style="font-size: 0.75rem;">
+                                        分配音色: <code style="font-size: 0.7rem;">{{ role.voice }}</code>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 pt-2 border-top border-light mt-3">
+                                    <button class="btn btn-sm btn-outline-secondary py-1 px-2 text-dark border-color" onclick="openEditModal({{ role.id }}, '{{ role.name }}', '{{ role.gender }}', '{{ role.voice }}', {{ role.temperature }}, this)">
+                                        <i class="bi bi-pencil-fill"></i> 修改配置
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger py-1 px-2" onclick="deleteCharacter({{ role.id }})">
+                                        <i class="bi bi-trash-fill"></i> 销毁分身
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12 text-center text-muted py-4">
+                        <i class="bi bi-robot" style="font-size: 2rem;"></i>
+                        <p class="small mt-2 mb-0">您还没有定制专属陪伴角色，点击右上角开始打造您的第一位解忧分身吧！</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 新增模块：智能情绪周报 -->
+        <div class="card custom-card p-4 shadow-lg mt-4">
+            <h3 class="fw-bold mb-4 d-flex align-items-center justify-content-between">
+                <span>
+                    <i class="bi bi-graph-up-arrow text-accent me-2" style="color: var(--accent-color);"></i>
+                    心理情绪分析与健康周报
+                </span>
+                <button class="btn btn-sm btn-accent" onclick="loadEmotionReport(this)">
+                    <i class="bi bi-cpu-fill me-1"></i> 分析并生成情绪报告
+                </button>
+            </h3>
+
+            <div class="row g-4" id="emotion-report-area">
+                <div class="col-12 text-center text-muted py-4" id="emotion-placeholder">
+                    <i class="bi bi-heart-pulse" style="font-size: 2rem;"></i>
+                    <p class="small mt-2 mb-0">系统将提取您的近期聊天与树洞记录，利用AI大模型分析情绪变化并生成多维雷达图。点击右上角按钮生成。</p>
+                </div>
+                
+                <div class="col-md-6 d-none" id="radar-container-col">
+                    <div id="radar-chart" style="width: 100%; height: 320px;"></div>
+                </div>
+                <div class="col-md-6 d-none d-flex flex-column justify-content-center" id="advice-container-col">
+                    <div class="p-3 rounded border border-color" style="background-color: var(--bg-hover);">
+                        <h6 class="fw-bold text-accent mb-2"><i class="bi bi-envelope-heart-fill me-1"></i>店员的心语与建议：</h6>
+                        <p class="small text-secondary mb-0" id="emotion-advice-text" style="line-height: 1.6;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 定制分身模态框 -->
+<div class="modal fade" id="charModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 custom-card">
+            <form action="{{ url_for('profile_character_save') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="char-modal-title">定制专属数字分身</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4">
+                    <input type="hidden" id="char-id" name="id">
+                    
+                    <div class="row g-3">
+                        <!-- 分身名 -->
+                        <div class="col-md-6">
+                            <label for="char-name" class="form-label small fw-semibold">分身展示名称</label>
+                            <input type="text" class="form-control" id="char-name" name="name" placeholder="例如: 专属倾听者" required>
+                        </div>
+                        
+                        <!-- 性别 -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold d-block">性别分配</label>
+                            <div class="form-check form-check-inline mt-2">
+                                    <input class="form-check-input" type="radio" name="gender" id="gender-female" value="female" checked>
+                                    <label class="form-check-label small" for="gender-female">女性角色</label>
+                            </div>
+                            <div class="form-check form-check-inline mt-2">
+                                    <input class="form-check-input" type="radio" name="gender" id="gender-male" value="male">
+                                    <label class="form-check-label small" for="gender-male">男性角色</label>
+                            </div>
+                        </div>
+                        
+                        <!-- 音色分配 -->
+                        <div class="col-md-6">
+                            <label for="char-voice" class="form-label small fw-semibold">TTS 语音音色分配</label>
+                            <select class="form-select" id="char-voice" name="voice">
+                                <option value="zh-CN-XiaoxiaoNeural" selected>zh-CN-XiaoxiaoNeural (温柔女声)</option>
+                                <option value="zh-CN-YunjianNeural">zh-CN-YunjianNeural (理智男声)</option>
+                                <option value="zh-CN-YunxiNeural">zh-CN-YunxiNeural (阳光男声)</option>
+                                <option value="zh-CN-XiaoyiNeural">zh-CN-XiaoyiNeural (活泼女声)</option>
+                            </select>
+                        </div>
+
+                        <!-- 说话风格 -->
+                        <div class="col-md-6">
+                            <label for="char-style" class="form-label small fw-semibold">默认说话语气风格</label>
+                            <select class="form-select" id="char-style" name="style_type">
+                                <option value="温柔倾听，语气治愈且充满关怀" selected>温柔治愈</option>
+                                <option value="理智严谨，逻辑客观且给出实质建议">理性客观</option>
+                                <option value="幽默风趣，说话接地气且会适当开玩笑">幽默风趣</option>
+                                <option value="阳光活泼，语气充满活力和积极能量">活泼开朗</option>
+                            </select>
+                        </div>
+
+                        <!-- 温和度 -->
+                        <div class="col-md-6">
+                            <label for="char-temp" class="form-label small fw-semibold">温和创造度 (Temperature)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="range" class="form-range flex-grow-1 me-3" id="char-temp" name="temperature" min="0.1" max="1.0" step="0.1" value="0.7" oninput="document.getElementById('temp-val').innerText = this.value">
+                                <span class="badge bg-secondary" id="temp-val">0.7</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.65rem;">数值越高回复越柔和且富于变化，越低越稳定。</div>
+                        </div>
+                        
+                        <!-- 提示词背景 -->
+                        <div class="col-12">
+                            <label for="char-desc" class="form-label small fw-semibold">AI 人设背景描述（告诉AI他的性格、喜好、甚至给他的特定背景）</label>
+                            <textarea class="form-control" id="char-desc" name="custom_desc" rows="4" placeholder="例如: 你是我最好的朋友，平时喜欢开导我，说话非常风趣。你叫小李，爱好运动..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-sm btn-accent px-4 fw-semibold">保存分身配置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let charModal = null;
+    document.addEventListener("DOMContentLoaded", function() {
+        charModal = new bootstrap.Modal(document.getElementById('charModal'));
+    });
+
+    function openAddModal() {
+        document.getElementById('char-modal-title').innerText = "定制专属数字分身";
+        document.getElementById('char-id').value = "";
+        document.getElementById('char-name').value = "";
+        document.getElementById('gender-female').checked = true;
+        document.getElementById('char-voice').value = "zh-CN-XiaoxiaoNeural";
+        document.getElementById('char-style').value = "温柔倾听，语气治愈且充满关怀";
+        document.getElementById('char-temp').value = "0.7";
+        document.getElementById('temp-val').innerText = "0.7";
+        document.getElementById('char-desc').value = "";
+        
+        charModal.show();
+    }
+
+    function openEditModal(id, name, gender, voice, temp, btnEl) {
+        document.getElementById('char-modal-title').innerText = "修改数字分身配置";
+        document.getElementById('char-id').value = id;
+        document.getElementById('char-name').value = name;
+        
+        if (gender === 'female') {
+            document.getElementById('gender-female').checked = true;
+        } else {
+            document.getElementById('gender-male').checked = true;
+        }
+        
+        document.getElementById('char-voice').value = voice;
+        document.getElementById('char-temp').value = temp;
+        document.getElementById('temp-val').innerText = temp;
+        
+        // 从包含卡片中拿取人设 Prompt 内容，剔除语气风格前缀，保留纯粹的人设描述
+        const cardBody = btnEl.closest('.card');
+        let fullPrompt = cardBody.querySelector('.raw-prompt-content').textContent.trim();
+        
+        // 尝试剔除格式 "你叫xxx，是用户打造的专属陪伴数字分身。说话风格是【xxx】。人设背景是：xxx" 中的人设背景部分
+        let descClean = fullPrompt;
+        const searchStr = "。人设背景是：";
+        const index = fullPrompt.indexOf(searchStr);
+        if (index !== -1) {
+            descClean = fullPrompt.substring(index + searchStr.length);
+            // 去除最后一个句号
+            if (descClean.endsWith('。')) {
+                descClean = descClean.substring(0, descClean.length - 1);
+            }
+        }
+        
+        document.getElementById('char-desc').value = descClean;
+        charModal.show();
+    }
+
+    function deleteCharacter(charId) {
+        if (!confirm("确定要销毁该专属数字分身吗？销毁后将无法再在聊天室和Ta对话。")) return;
+        
+        fetch('/profile/character/delete/' + charId, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const card = document.getElementById('char-card-' + charId);
+                if (card) card.remove();
+                alert("已成功销毁数字分身。");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("销毁失败，请重试");
+        });
+    }
+
+    // 实时更换页面主题类名，让用户点击选项时立即在前端预览主题样式变化
+    function switchLiveTheme(themeName) {
+        const body = document.body;
+        // 移出当前可能存在的主题类
+        body.classList.remove('theme-warm', 'theme-sleek', 'theme-minimalist');
+        // 添加选中的主题类
+        body.classList.add('theme-' + themeName);
+    }
+
+    // 上传头像后的图片实时本地预览
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContainer = document.getElementById('image-preview-container');
+                const previewImg = document.getElementById('avatar-preview');
+                previewImg.src = e.target.result;
+                previewContainer.classList.remove('d-none');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+<!-- 引入 ECharts 绘图库 -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    function loadEmotionReport(btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>深度分析心境中...';
+        
+        fetch('/api/emotion/report')
+        .then(res => res.json())
+        .then(data => {
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>分析完成';
+            
+            // 隐藏 Placeholder，显示图表与建议
+            document.getElementById('emotion-placeholder').classList.add('d-none');
+            document.getElementById('radar-container-col').classList.remove('d-none');
+            document.getElementById('advice-container-col').classList.remove('d-none');
+            
+            // 填充建议
+            document.getElementById('emotion-advice-text').innerText = data.advice;
+            
+            // 初始化 ECharts
+            const chartDom = document.getElementById('radar-chart');
+            const myChart = echarts.init(chartDom);
+            
+            const option = {
+                title: {
+                    text: '心理健康指数雷达图',
+                    left: 'center',
+                    textStyle: { fontSize: 13, color: '#334155' }
+                },
+                tooltip: {},
+                radar: {
+                    indicator: [
+                        { name: '学业压力', max: 100 },
+                        { name: '人际交往', max: 100 },
+                        { name: '自我认同', max: 100 },
+                        { name: '积极情绪', max: 100 },
+                        { name: '情绪稳定', max: 100 }
+                    ],
+                    radius: 90,
+                    center: ['50%', '60%']
+                },
+                series: [{
+                    name: '情绪指数',
+                    type: 'radar',
+                    data: [
+                        {
+                            value: [
+                                data.scores.study,
+                                data.scores.social,
+                                data.scores.self,
+                                data.scores.mood,
+                                data.scores.stability
+                            ],
+                            name: '心境评分',
+                            areaStyle: {
+                                color: 'rgba(217, 119, 6, 0.3)'
+                            },
+                            lineStyle: {
+                                color: '#d97706'
+                            },
+                            itemStyle: {
+                                color: '#d97706'
+                            }
+                        }
+                    ]
+                }]
+            };
+            
+            myChart.setOption(option);
+        })
+        .catch(err => {
+            console.error(err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i>重新生成报告';
+            alert("生成情绪报告失败，请确保网络连接正常后重试！");
+        });
+    }
+</script>
+{% endblock %}

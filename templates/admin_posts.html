@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容审核与举报仲裁 - 运维后台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .admin-nav {
+            background-color: #0f172a;
+            border-bottom: 2px solid #0284c7;
+        }
+        .admin-nav .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .admin-nav .nav-link:hover, .admin-nav .nav-link.active {
+            color: #ffffff;
+        }
+        .card-custom {
+            border-radius: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        .sensitive-warning {
+            border: 1px solid #fecaca !important;
+            background-color: #fef2f2 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 后台统一导航 -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav py-2 mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-shield-fill-check text-info me-2"></i>
+                解忧杂货铺 · 管理后台
+            </a>
+            <div class="collapse navbar-collapse justify-content-end" id="adminNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>数据看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill me-1"></i>用户账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_characters') }}"><i class="bi bi-robot me-1"></i>智能体人设配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active me-3" href="{{ url_for('admin_posts') }}"><i class="bi bi-shield-exclamation me-1"></i>树洞安全治理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_sensitive') }}"><i class="bi bi-spellcheck me-1"></i>敏感词维护</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_announcements') }}"><i class="bi bi-megaphone-fill me-1"></i>校园公告发布</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_logs') }}"><i class="bi bi-journal-text me-1"></i>操作审计日志</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-info me-2" href="{{ url_for('chat') }}"><i class="bi bi-reply"></i> 前往学生端</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-danger px-3" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体 -->
+    <main class="container mb-5">
+        <div class="row align-items-center mb-4">
+            <div class="col-12">
+                <h4 class="fw-bold mb-1"><i class="bi bi-shield-exclamation me-2"></i>树洞社区安全治理</h4>
+                <p class="text-secondary small mb-0">实时查看树洞发布，系统已标红疑似含有违规敏感词的内容；集中仲裁学生举报的恶意内容</p>
+            </div>
+        </div>
+
+        <!-- Tab 标签页切换 -->
+        <ul class="nav nav-tabs mb-4" id="auditTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="all-posts-tab" data-bs-toggle="tab" data-bs-target="#all-posts" type="button" role="tab">
+                    <i class="bi bi-layout-text-window-reverse me-1"></i> 内容审核流水线 ({{ posts | length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-danger" id="reported-tab" data-bs-toggle="tab" data-bs-target="#reported" type="button" role="tab">
+                    <i class="bi bi-flag-fill me-1"></i> 举报事件仲裁中心 ({{ reported_posts | length }})
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab 内容区 -->
+        <div class="tab-content" id="auditTabsContent">
+            <!-- Tab 1: 全部内容审核 -->
+            <div class="tab-pane fade show active" id="all-posts" role="tabpanel">
+                <div class="row g-3">
+                    {% if posts %}
+                        {% for post in posts %}
+                            <!-- 检测是否包含系统屏蔽的敏感标志 "***" -->
+                            {% set has_sensitive = '***' in post.content %}
+                            <div class="col-md-6" id="post-card-{{ post.id }}">
+                                <div class="card card-custom p-3 h-100 d-flex flex-column justify-content-between {% if has_sensitive %}sensitive-warning{% endif %}">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <span class="fw-bold text-dark small">{{ post.nickname }}</span>
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border ms-2" style="font-size: 0.65rem;">
+                                                    {{ post.category }}
+                                                </span>
+                                                {% if has_sensitive %}
+                                                    <span class="badge bg-danger ms-2" style="font-size: 0.65rem;">触发敏感词警告</span>
+                                                {% endif %}
+                                                {% if post.status == 'hidden' %}
+                                                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65rem;" id="post-status-badge-{{ post.id }}">已下架</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted" style="font-size: 0.75rem;">{{ post.created_at }}</small>
+                                        </div>
+                                        <p class="text-secondary small mb-3" style="white-space: pre-wrap;">{{ post.content }}</p>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center border-top border-light pt-2 mt-2">
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-danger me-1" onclick="banAuthor({{ post.id }}, '{{ post.nickname }}')">
+                                                <i class="bi bi-person-x-fill"></i> 封禁作者
+                                            </button>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if post.status == 'published' %}
+                                                <button class="btn btn-outline-warning" id="status-btn-{{ post.id }}" onclick="togglePostStatus({{ post.id }}, 'hide')">
+                                                    <i class="bi bi-eye-slash-fill"></i> 下架
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-success" id="status-btn-{{ post.id }}" onclick="togglePostStatus({{ post.id }}, 'recover')">
+                                                    <i class="bi bi-eye-fill"></i> 恢复展示
+                                                </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-danger" onclick="deletePost({{ post.id }})">
+                                                <i class="bi bi-trash-fill"></i> 彻底删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center text-muted py-5 card card-custom">
+                            <i class="bi bi-check-circle" style="font-size: 3rem;"></i>
+                            <h6 class="mt-3">目前没有学生发布动态内容</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tab 2: 举报仲裁中心 -->
+            <div class="tab-pane fade" id="reported" role="tabpanel">
+                <div class="row g-3">
+                    {% if reported_posts %}
+                        {% for post in reported_posts %}
+                            <div class="col-md-6" id="report-card-{{ post.id }}">
+                                <div class="card card-custom p-3 border-danger border-opacity-25 h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="alert alert-danger py-2 px-3 small d-flex flex-column gap-1 mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <span><strong>被举报内容 (发帖人: {{ post.nickname }})</strong></span>
+                                                <span class="badge bg-danger">被举报</span>
+                                            </div>
+                                            <div><strong>举报原因：</strong><span class="text-decoration-underline">{{ post.report_reason or '无说明' }}</span></div>
+                                            <div><strong>举报人账号：</strong><code>{{ post.reporter_username or '未知' }}</code></div>
+                                        </div>
+                                        <p class="text-secondary small mb-3" style="white-space: pre-wrap;">{{ post.content }}</p>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end border-top border-light pt-2 mt-2 gap-2">
+                                        <button class="btn btn-sm btn-success text-white" onclick="arbitratePost({{ post.id }}, 'recover')">
+                                            <i class="bi bi-check-circle-fill"></i> 驳回举报(维持原状)
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="arbitratePost({{ post.id }}, 'hide')">
+                                            <i class="bi bi-x-circle-fill"></i> 下架处罚(删除内容)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center text-muted py-5 card card-custom">
+                            <i class="bi bi-shield-fill-check text-success" style="font-size: 3rem;"></i>
+                            <h6 class="mt-3 text-success fw-bold">海晏河清，无待处理举报件</h6>
+                            <p class="small mt-1 text-secondary">所有被学生举报的恶意内容均已仲裁完毕。</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        // 一键下架/恢复展示
+        function togglePostStatus(postId, action) {
+            const formData = new FormData();
+            formData.append('action', action);
+            
+            fetch(`/admin/posts/status/${postId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('操作失败');
+            });
+        }
+
+        // 彻底删除动态
+        function deletePost(postId) {
+            if (!confirm('确定要彻底从数据库删除该树洞帖子吗？此操作无法恢复。')) return;
+            
+            fetch(`/admin/posts/delete/${postId}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const card = document.getElementById('post-card-' + postId);
+                    if (card) card.remove();
+                    alert('帖子已被彻底清除。');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('删除失败');
+            });
+        }
+
+        // 封禁作者并一键下架其所有言论
+        function banAuthor(postId, nickname) {
+            if (!confirm(`确定要封禁该帖子的作者【${nickname}】吗？封禁后该学生的账号状态会变更为禁用，且其发过的所有树洞动态将一键全部下架处理！`)) return;
+            
+            fetch(`/admin/posts/ban_author/${postId}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('封禁失败：' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('网络异常，封禁失败');
+            });
+        }
+
+        // 仲裁中心：驳回举报(恢复发布) 或 下架处罚
+        function arbitratePost(postId, decision) {
+            const formData = new FormData();
+            formData.append('action', decision);
+            
+            const tipText = decision === 'recover' ? '确定驳回举报，保留该动态展示吗？' : '确定对该被举报动态进行下架处罚吗？';
+            if (!confirm(tipText)) return;
+
+            fetch(`/admin/posts/status/${postId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(decision === 'recover' ? '已成功驳回举报！' : '处罚下架完成！');
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('网络错误');
+            });
+        }
+    </script>
+</body>
+</html>

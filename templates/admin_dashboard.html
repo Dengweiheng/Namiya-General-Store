@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统数据看板 - 运维后台</title>
+    <!-- 引用本地库 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .admin-nav {
+            background-color: #0f172a;
+            border-bottom: 2px solid #0284c7;
+        }
+        .admin-nav .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .admin-nav .nav-link:hover, .admin-nav .nav-link.active {
+            color: #ffffff;
+        }
+        .card-custom {
+            border-radius: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        .stat-card {
+            border-left: 4px solid #0284c7;
+        }
+        .chart-container {
+            min-height: 320px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 后台统一导航 -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav py-2 mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-shield-fill-check text-info me-2"></i>
+                解忧杂货铺 · 管理后台
+            </a>
+            <div class="collapse navbar-collapse justify-content-end" id="adminNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link active me-3" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>数据看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill me-1"></i>用户账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_characters') }}"><i class="bi bi-robot me-1"></i>智能体人设配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_posts') }}"><i class="bi bi-shield-exclamation me-1"></i>树洞安全治理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_sensitive') }}"><i class="bi bi-spellcheck me-1"></i>敏感词维护</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_announcements') }}"><i class="bi bi-megaphone-fill me-1"></i>校园公告发布</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_logs') }}"><i class="bi bi-journal-text me-1"></i>操作审计日志</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-info me-2" href="{{ url_for('chat') }}"><i class="bi bi-reply"></i> 前往学生端</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-danger px-3" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="container mb-5">
+        <!-- 看板标题 -->
+        <div class="row align-items-center mb-4">
+            <div class="col-12">
+                <h4 class="fw-bold mb-1"><i class="bi bi-speedometer2 me-2"></i>可视化解忧数据看板</h4>
+                <p class="text-secondary small mb-0">系统数据运营简报：直观呈现累计服务人次、通话时长、热议主题分类以及心理情绪波动数据</p>
+            </div>
+        </div>
+
+        <!-- 顶部核心运营指标卡片 -->
+        <div class="row g-3 mb-4">
+            <!-- 累计服务人次 -->
+            <div class="col-md-4">
+                <div class="card card-custom stat-card p-3 d-flex flex-row align-items-center justify-content-between">
+                    <div>
+                        <span class="small text-secondary fw-semibold">累计陪伴服务人次</span>
+                        <h2 class="fw-bold mt-1 mb-0">{{ total_services }} 次</h2>
+                    </div>
+                    <i class="bi bi-chat-heart text-info" style="font-size: 2.2rem; opacity: 0.35;"></i>
+                </div>
+            </div>
+            
+            <!-- 今日活跃用户数 -->
+            <div class="col-md-4">
+                <div class="card card-custom stat-card p-3 d-flex flex-row align-items-center justify-content-between" style="border-left-color: #10b981;">
+                    <div>
+                        <span class="small text-secondary fw-semibold">今日活跃倾诉学生</span>
+                        <h2 class="fw-bold mt-1 mb-0">{{ active_users_today }} 人</h2>
+                    </div>
+                    <i class="bi bi-people-fill text-success" style="font-size: 2.2rem; opacity: 0.35;"></i>
+                </div>
+            </div>
+            
+            <!-- 语音通话总时长 -->
+            <div class="col-md-4">
+                <div class="card card-custom stat-card p-3 d-flex flex-row align-items-center justify-content-between" style="border-left-color: #f59e0b;">
+                    <div>
+                        <span class="small text-secondary fw-semibold">双向通话累计估算时长</span>
+                        <h2 class="fw-bold mt-1 mb-0">{{ duration_str }}</h2>
+                    </div>
+                    <i class="bi bi-telephone-outbound text-warning" style="font-size: 2.2rem; opacity: 0.35;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下方图表看板区 -->
+        <div class="row g-4">
+            <!-- 树洞情绪分类比例 (饼图) -->
+            <div class="col-md-6">
+                <div class="card card-custom p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart-fill text-accent me-2" style="color: var(--accent-color);"></i>学生整体心声板块倾向比重</h6>
+                    <div id="emotionPieChart" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <!-- 树洞热词词频统计 (柱状图) -->
+            <div class="col-md-6">
+                <div class="card card-custom p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-steps text-accent me-2" style="color: var(--accent-color);"></i>校园情绪热议词频扫描</h6>
+                    <div id="keywordBarChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 引入项目本地的 ECharts JS 文件 -->
+    <script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+    <script>
+        // 1. 初始化饼图 (树洞板块发帖占比，即学生整体心理倾向)
+        const pieDom = document.getElementById('emotionPieChart');
+        const pieChart = echarts.init(pieDom);
+        const pieRawData = {{ pie_data | tojson }};
+        
+        const pieOption = {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c} 篇 ({d}%)'
+            },
+            legend: {
+                bottom: '0%',
+                left: 'center'
+            },
+            series: [
+                {
+                    name: '心声类别',
+                    type: 'pie',
+                    radius: ['45%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 8,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '16',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: pieRawData.some(d => d.value > 0) ? pieRawData : [
+                        { name: '暂无数据', value: 0 }
+                    ]
+                }
+            ],
+            color: ['#ff9f9f', '#bae1ff', '#baffc9', '#ffffba']
+        };
+        pieChart.setOption(pieOption);
+
+        // 2. 初始化柱状图 (热门情绪词频统计)
+        const barDom = document.getElementById('keywordBarChart');
+        const barChart = echarts.init(barDom);
+        const barX = {{ bar_x | tojson }};
+        const barY = {{ bar_y | tojson }};
+        
+        const barOption = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: barX,
+                axisTick: {
+                    alignWithLabel: true
+                }
+            },
+            yAxis: {
+                type: 'value',
+                minInterval: 1 // 整数坐标轴
+            },
+            series: [
+                {
+                    name: '出现频次',
+                    type: 'bar',
+                    barWidth: '50%',
+                    data: barY,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#ffb3ba' },
+                            { offset: 1, color: '#ffdfba' }
+                        ]),
+                        borderRadius: [5, 5, 0, 0]
+                    }
+                }
+            ]
+        };
+        barChart.setOption(barOption);
+
+        // 浏览器窗口变化自适应大小
+        window.addEventListener('resize', function() {
+            pieChart.resize();
+            barChart.resize();
+        });
+    </script>
+</body>
+</html>

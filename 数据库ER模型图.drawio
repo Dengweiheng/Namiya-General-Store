@@ -1,0 +1,163 @@
+<mxfile host="app.diagrams.net" agent="Draw.io Agent">
+  <diagram id="chens-er-diagram" name="解忧杂货铺陈氏ERD">
+    <mxGraphModel dx="3401" dy="993" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ent_user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;labelBackgroundColor=none;" value="用户 (User)" vertex="1">
+          <mxGeometry height="60" width="120" x="450" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_character" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;labelBackgroundColor=none;" value="智能体 (Character)" vertex="1">
+          <mxGeometry height="60" width="140" x="850" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_post" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;labelBackgroundColor=none;" value="树洞动态 (Post)" vertex="1">
+          <mxGeometry height="60" width="120" x="450" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_letter" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;labelBackgroundColor=none;" value="治愈信件 (Letter)" vertex="1">
+          <mxGeometry height="60" width="120" x="100" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_log" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;labelBackgroundColor=none;" value="操作日志 (Admin Log)" vertex="1">
+          <mxGeometry height="60" width="140" x="850" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_u_id" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="用户ID (PK)" vertex="1">
+          <mxGeometry height="50" width="100" x="380" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_u_name" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="用户名 (UK)" vertex="1">
+          <mxGeometry height="50" width="100" x="500" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_u_nick" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="昵称" vertex="1">
+          <mxGeometry height="50" width="100" x="610" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_u_active" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="账号状态" vertex="1">
+          <mxGeometry height="50" width="100" x="300" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_c_id" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="智能体ID (PK)" vertex="1">
+          <mxGeometry height="50" width="100" x="780" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_c_key" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="标识键 (UK)" vertex="1">
+          <mxGeometry height="50" width="100" x="890" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_c_voice" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="神经网络音色" vertex="1">
+          <mxGeometry height="50" width="100" x="1000" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_c_prompt" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="人设提示词" vertex="1">
+          <mxGeometry height="50" width="100" x="1020" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_p_id" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="动态ID (PK)" vertex="1">
+          <mxGeometry height="50" width="100" x="310" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_p_content" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="倾诉正文" vertex="1">
+          <mxGeometry height="50" width="100" x="370" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_p_status" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="审核状态" vertex="1">
+          <mxGeometry height="50" width="100" x="490" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_l_id" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="信件ID (PK)" vertex="1">
+          <mxGeometry height="50" width="100" x="30" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_l_title" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="主题标题" vertex="1">
+          <mxGeometry height="50" width="100" x="-30" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_l_read" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="已读标志" vertex="1">
+          <mxGeometry height="50" width="100" x="100" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_g_id" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="日志ID (PK)" vertex="1">
+          <mxGeometry height="50" width="100" x="830" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_g_action" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="动作类型" vertex="1">
+          <mxGeometry height="50" width="100" x="950" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="attr_g_detail" parent="1" style="ellipse;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="审计详情" vertex="1">
+          <mxGeometry height="50" width="100" x="1020" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_chat" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontStyle=1;fontSize=12;labelBackgroundColor=none;" value="对话" vertex="1">
+          <mxGeometry height="80" width="80" x="690" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_publish" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontStyle=1;fontSize=12;labelBackgroundColor=none;" value="发布" vertex="1">
+          <mxGeometry height="80" width="80" x="470" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_receive" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontStyle=1;fontSize=12;labelBackgroundColor=none;" value="接收" vertex="1">
+          <mxGeometry height="80" width="80" x="290" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_log" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontStyle=1;fontSize=12;labelBackgroundColor=none;" value="记录审计" vertex="1">
+          <mxGeometry height="80" width="80" x="690" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_chat" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontStyle=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_chat" value="N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_c_chat" edge="1" parent="1" source="ent_character" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;fontStyle=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_chat" value="M">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_pub" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontStyle=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_publish" value="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_p_pub" edge="1" parent="1" source="ent_post" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=0.5;exitY=0;entryX=0.5;entryY=1;fontStyle=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_publish" value="N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_rec" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;fontStyle=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_receive" value="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_l_rec" edge="1" parent="1" source="ent_letter" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontStyle=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_receive" value="N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_log" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=0.8;exitY=1;entryX=0;entryY=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_log" value="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_g_log" edge="1" parent="1" source="ent_log" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;exitX=0.5;exitY=0;entryX=0.5;entryY=1;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;" target="rel_log" value="N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eu_a1" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;html=1;exitX=0.25;exitY=0;entryX=0.5;entryY=1;labelBackgroundColor=none;fontColor=default;" target="attr_u_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eu_a2" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;labelBackgroundColor=none;fontColor=default;" target="attr_u_name">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eu_a3" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;html=1;exitX=0.75;exitY=0;entryX=0.5;entryY=1;labelBackgroundColor=none;fontColor=default;" target="attr_u_nick">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eu_a4" edge="1" parent="1" source="ent_user" style="edgeStyle=none;rounded=0;html=1;exitX=0;exitY=0.25;entryX=1;entryY=0.5;labelBackgroundColor=none;fontColor=default;" target="attr_u_active">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec_a1" edge="1" parent="1" source="ent_character" style="edgeStyle=none;rounded=0;html=1;exitX=0.25;exitY=0;entryX=0.5;entryY=1;labelBackgroundColor=none;fontColor=default;" target="attr_c_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec_a2" edge="1" parent="1" source="ent_character" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;labelBackgroundColor=none;fontColor=default;" target="attr_c_key">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec_a3" edge="1" parent="1" source="ent_character" style="edgeStyle=none;rounded=0;html=1;exitX=0.75;exitY=0;entryX=0.5;entryY=1;labelBackgroundColor=none;fontColor=default;" target="attr_c_voice">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec_a4" edge="1" parent="1" source="ent_character" style="edgeStyle=none;rounded=0;html=1;exitX=1;exitY=0.25;entryX=0;entryY=0.5;labelBackgroundColor=none;fontColor=default;" target="attr_c_prompt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_a1" edge="1" parent="1" source="ent_post" style="edgeStyle=none;rounded=0;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;labelBackgroundColor=none;fontColor=default;" target="attr_p_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_a2" edge="1" parent="1" source="ent_post" style="edgeStyle=none;rounded=0;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;labelBackgroundColor=none;fontColor=default;" target="attr_p_content">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_a3" edge="1" parent="1" source="ent_post" style="edgeStyle=none;rounded=0;html=1;exitX=0.75;exitY=1;entryX=0.5;entryY=0;labelBackgroundColor=none;fontColor=default;" target="attr_p_status">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="el_a1" edge="1" parent="1" source="ent_letter" style="edgeStyle=none;rounded=0;html=1;exitX=0;exitY=0.25;entryX=1;entryY=0.5;labelBackgroundColor=none;fontColor=default;" target="attr_l_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="el_a2" edge="1" parent="1" source="ent_letter" style="edgeStyle=none;rounded=0;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;labelBackgroundColor=none;fontColor=default;" target="attr_l_title">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="el_a3" edge="1" parent="1" source="ent_letter" style="edgeStyle=none;rounded=0;html=1;exitX=0.75;exitY=1;entryX=0.5;entryY=0;labelBackgroundColor=none;fontColor=default;" target="attr_l_read">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eg_a1" edge="1" parent="1" source="ent_log" style="edgeStyle=none;rounded=0;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;labelBackgroundColor=none;fontColor=default;" target="attr_g_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eg_a2" edge="1" parent="1" source="ent_log" style="edgeStyle=none;rounded=0;html=1;exitX=0.75;exitY=1;entryX=0.5;entryY=0;labelBackgroundColor=none;fontColor=default;" target="attr_g_action">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eg_a3" edge="1" parent="1" source="ent_log" style="edgeStyle=none;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;labelBackgroundColor=none;fontColor=default;" target="attr_g_detail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

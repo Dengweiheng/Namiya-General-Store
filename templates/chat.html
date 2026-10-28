@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}语音陪伴聊天 - 解忧杂货铺{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- 左侧：对话历史与关键词搜索栏 -->
+    <div class="col-md-4">
+        <div class="card custom-card p-3 shadow-sm chat-sidebar">
+            <h5 class="fw-bold mb-3 d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-clock-history me-2 text-accent" style="color: var(--accent-color);"></i>对话历史</span>
+                <a href="{{ url_for('chat', role=role_id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size: 0.75rem;">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新列表
+                </a>
+            </h5>
+            
+            <!-- 关键词搜索输入框 -->
+            <form action="{{ url_for('chat') }}" method="GET" class="mb-3">
+                <input type="hidden" name="role" value="{{ role_id }}">
+                <div class="input-group">
+                    <input type="text" class="form-control form-control-sm border-color" name="q" value="{{ q }}" placeholder="搜索历史内容...">
+                    <button class="btn btn-sm btn-accent" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+                {% if q %}
+                    <div class="small mt-1 text-muted d-flex justify-content-between align-items-center">
+                        <span>找到相关内容</span>
+                        <a href="{{ url_for('chat', role=role_id) }}" class="text-danger text-decoration-none">清除搜索</a>
+                    </div>
+                {% endif %}
+            </form>
+            
+            <!-- 历史列表分组展示 -->
+            <div class="history-groups">
+                {% if grouped_history %}
+                    {% for date_group, records in grouped_history.items() %}
+                        <div class="date-group-title small fw-bold text-secondary mb-2 mt-3">{{ date_group }}</div>
+                        <div class="list-group list-group-flush">
+                            {% for record in records %}
+                                <div class="list-group-item bg-transparent border-0 px-2 py-1 chat-history-item" onclick="scrollToMessage({{ record.id }})">
+                                    <div class="d-flex w-100 justify-content-between text-truncate">
+                                        <span class="small fw-semibold text-truncate me-2">
+                                            {% if record.sender == 'user' %}
+                                                <i class="bi bi-person text-primary me-1"></i>我：
+                                            {% else %}
+                                                <i class="bi bi-chat-heart text-danger me-1"></i>店员：
+                                            {% endif %}
+                                            {{ record.content }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted my-5 py-3">
+                        <i class="bi bi-chat-square-dots" style="font-size: 2rem;"></i>
+                        <p class="small mt-2">暂无匹配的历史对话记录</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧：AI 角色选择与对话视窗 -->
+    <div class="col-md-8">
+        <div class="card custom-card p-3 shadow-lg chat-window">
+            <!-- 头部：角色选择器 -->
+            <div class="d-flex justify-content-between align-items-center border-bottom border-color pb-3 mb-3">
+                <div class="d-flex align-items-center">
+                    {% if role_info.gender == 'female' %}
+                        <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                            👩‍💼
+                        </div>
+                    {% else %}
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                            👨‍💼
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="fw-bold mb-0">{{ role_info.name }}</h6>
+                        <span class="badge rounded-pill bg-light text-secondary border small mt-1">
+                            音色: {{ '女声' if role_info.gender == 'female' else '男声' }} ({{ role_info.voice.split('-')[-1].replace('Neural', '') if '-' in role_info.voice else role_info.voice }})
+                        </span>
+                    </div>
+                </div>
+                <!-- 智能体陪伴角色动态切换按钮 -->
+                <div class="btn-group" role="group">
+                    {% for role in all_roles %}
+                        <a href="{{ url_for('chat', role=role.role_key) }}" class="btn btn-sm btn-outline-secondary {% if role_id == role.role_key %}active{% endif %}">
+                            {{ '👩‍💼' if role.gender == 'female' else '👨‍💼' }} {{ role.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 对话气泡展示视窗 -->
+            <div class="chat-messages-container d-flex flex-column" id="chat-messages">
+                {% if active_chat %}
+                    {% for msg in active_chat %}
+                        <div class="d-flex flex-column {{ 'align-items-end' if msg.sender == 'user' else 'align-items-start' }} mb-2" id="msg-{{ msg.id }}">
+                            <div class="message-bubble message-{{ msg.sender }} message-{{ role_id }}">
+                                {{ msg.content }}
+                                {% if msg.sender == 'ai' and msg.audio_url %}
+                                    <button class="btn btn-sm p-0 ms-2 text-accent" onclick="playAudio('{{ msg.audio_url }}', this)" title="播放语音">
+                                        <i class="bi bi-volume-up-fill" style="font-size: 1.1rem;"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted" style="font-size: 0.7rem; margin-top: -8px; margin-left: 8px; margin-right: 8px;">
+                                {{ msg.created_at }}
+                            </small>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- 首次欢迎消息 -->
+                    <div class="text-center text-muted my-auto py-5">
+                        <i class="bi bi-heart-fill text-danger" style="font-size: 2.5rem;"></i>
+                        <h5 class="mt-3 fw-semibold">今天有什么烦心事吗？</h5>
+                        <p class="small">我是你的专属{{ role_info.name }}，你可以直接打字或长按麦克风对我说...</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- 底部控制栏：麦克风输入与发送 -->
+            <div class="border-top border-color pt-3 mt-3">
+                <div class="d-flex align-items-center mb-2 justify-content-between">
+                    <span id="speech-status" class="small text-muted d-none">
+                        <i class="bi bi-mic-fill text-danger me-1"></i>录音识别中...
+                    </span>
+                </div>
+                
+                <!-- 文字/发送栏 -->
+                <div class="input-group">
+                    <!-- 触发式麦克风按钮 -->
+                    <button class="btn btn-outline-secondary" type="button" id="mic-btn" onclick="toggleSpeechRecognition()" title="点击开启语音输入">
+                        <i class="bi bi-mic" id="mic-icon" style="font-size: 1.2rem;"></i>
+                    </button>
+                    
+                    <input type="text" class="form-control border-color" id="chat-input" placeholder="输入你想倾诉的话..." onkeydown="handleEnterKey(event)">
+                    
+                    <button class="btn btn-accent" type="button" onclick="sendMessage()" id="send-btn">
+                        <i class="bi bi-send-fill me-1"></i> 发送
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 隐藏式音频播放器 -->
+<audio id="global-audio-player" class="d-none"></audio>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 自动将聊天窗口滚动到最底部
+    const messagesContainer = document.getElementById('chat-messages');
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    window.onload = scrollToBottom;
+
+    // 点击历史记录时平滑滚动到具体消息位置
+    function scrollToMessage(msgId) {
+        const element = document.getElementById('msg-' + msgId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.classList.add('bg-warning', 'bg-opacity-10');
+            setTimeout(() => {
+                element.classList.remove('bg-warning', 'bg-opacity-10');
+            }, 1500);
+        }
+    }
+
+    // 播放 TTS 生成的音频
+    let activeVolumeBtn = null;
+    function playAudio(audioUrl, btnElement) {
+        const audio = document.getElementById('global-audio-player');
+        
+        // 如果再次点击正在播放的语音，则暂停
+        if (!audio.paused && audio.src.endsWith(audioUrl)) {
+            audio.pause();
+            stopAudioAnimation();
+            return;
+        }
+
+        // 停止之前的动画
+        stopAudioAnimation();
+
+        audio.src = audioUrl;
+        audio.play().then(() => {
+            activeVolumeBtn = btnElement;
+            if (activeVolumeBtn) {
+                // 替换图标为声波动画
+                activeVolumeBtn.innerHTML = '<span class="voice-wave"><span></span><span></span><span></span><span></span></span>';
+            }
+        }).catch(err => {
+            console.error('音频播放失败：', err);
+        });
+
+        audio.onended = function() {
+            stopAudioAnimation();
+        };
+    }
+
+    function stopAudioAnimation() {
+        if (activeVolumeBtn) {
+            activeVolumeBtn.innerHTML = '<i class="bi bi-volume-up-fill" style="font-size: 1.1rem;"></i>';
+            activeVolumeBtn = null;
+        }
+    }
+
+    // 发送消息
+    function sendMessage() {
+        const inputEl = document.getElementById('chat-input');
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        // 清空输入框并设置发送中状态
+        inputEl.value = '';
+        inputEl.disabled = true;
+        const sendBtn = document.getElementById('send-btn');
+        sendBtn.disabled = true;
+
+        // 立即在前台 append 用户消息
+        appendMessage('user', text);
+        scrollToBottom();
+
+        // 异步请求后端大模型接口
+        fetch('/api/chat/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: text,
+                role_id: '{{ role_id }}'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            inputEl.disabled = false;
+            sendBtn.disabled = false;
+            inputEl.focus();
+
+            if (data.reply) {
+                // append AI 回复消息气泡并传入多媒体推送
+                appendMessage('ai', data.reply, data.audio_url, data.created_at, data.media_push);
+                scrollToBottom();
+                
+                // 自动播放生成的音色语音
+                if (data.audio_url) {
+                    // 获取刚生成的回复气泡中的播放按钮
+                    setTimeout(() => {
+                        const playBtns = document.getElementsByClassName('bi-volume-up-fill');
+                        const lastBtn = playBtns[playBtns.length - 1];
+                        if (lastBtn) {
+                            playAudio(data.audio_url, lastBtn.parentElement);
+                        }
+                    }, 100);
+                }
+            } else if (data.error) {
+                appendMessage('ai', '服务出现错误：' + data.error);
+                scrollToBottom();
+            }
+        })
+        .catch(err => {
+            inputEl.disabled = false;
+            sendBtn.disabled = false;
+            console.error(err);
+            appendMessage('ai', '系统连接失败，请检查网络后再试。');
+            scrollToBottom();
+        });
+    }
+
+    function handleEnterKey(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // 动态拼接消息到 DOM，新增 mediaPush 渲染支持
+    function appendMessage(sender, text, audioUrl = null, timeStr = null, mediaPush = null) {
+        const container = document.getElementById('chat-messages');
+        const time = timeStr || new Date().toLocaleString();
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = `d-flex flex-column ${sender === 'user' ? 'align-items-end' : 'align-items-start'} mb-2`;
+        
+        let audioButtonHtml = '';
+        if (sender === 'ai' && audioUrl) {
+            audioButtonHtml = `<button class="btn btn-sm p-0 ms-2 text-accent" onclick="playAudio('${audioUrl}', this)" title="播放语音"><i class="bi bi-volume-up-fill" style="font-size: 1.1rem;"></i></button>`;
+        }
+
+        let mediaPushHtml = '';
+        if (sender === 'ai' && mediaPush) {
+            mediaPushHtml = `
+                <div class="media-recommend-card shadow-sm d-flex align-items-center mt-1 mb-2 border-color text-start">
+                    <span class="badge bg-danger bg-opacity-10 text-danger p-2 me-2 ms-2">
+                        <i class="bi ${mediaPush.icon || 'bi-headphones'}" style="font-size: 1rem;"></i>
+                    </span>
+                    <div class="pe-2">
+                        <div class="fw-bold text-dark" style="font-size: 0.8rem;">${mediaPush.title}</div>
+                        <div class="text-muted" style="font-size: 0.72rem; line-height: 1.3;">${mediaPush.description}</div>
+                        <a href="${mediaPush.url}" target="_blank" class="small fw-bold text-decoration-none" style="color: var(--accent-color); font-size: 0.75rem;">点击开启舒缓之旅 &rarr;</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        wrapper.innerHTML = `
+            <div class="message-bubble message-${sender} message-{{ role_id }}">
+                ${text}
+                ${audioButtonHtml}
+            </div>
+            ${mediaPushHtml}
+            <small class="text-muted" style="font-size: 0.7rem; margin-top: -8px; margin-left: 8px; margin-right: 8px;">
+                ${time}
+            </small>
+        `;
+        container.appendChild(wrapper);
+    }
+
+    // ==========================================
+    // ASR 语音识别与唤醒控制逻辑
+    // ==========================================
+    let recognition = null;
+    let isListening = false;
+    let wakeRecognition = null;
+    let isWakeMonitoring = false;
+
+    // 初始化 SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        document.getElementById('mic-btn').disabled = true;
+        document.getElementById('mic-btn').title = "当前浏览器不支持语音输入功能";
+        document.getElementById('wake-toggle').disabled = true;
+        console.warn("当前浏览器不支持 HTML5 SpeechRecognition API");
+    }
+
+    // 触发式语音输入逻辑
+    function toggleSpeechRecognition() {
+        if (!SpeechRecognition) return;
+
+        if (isListening) {
+            recognition.stop();
+            return;
+        }
+
+        // 点击麦克风按钮触发录音
+
+        recognition = new SpeechRecognition();
+        recognition.lang = 'zh-CN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = function() {
+            isListening = true;
+            document.getElementById('mic-icon').className = 'bi bi-mic-fill text-danger mic-recording';
+            document.getElementById('speech-status').classList.remove('d-none');
+        };
+
+        recognition.onresult = function(event) {
+            const speechResult = event.results[0][0].transcript;
+            document.getElementById('chat-input').value = speechResult;
+        };
+
+        recognition.onerror = function(event) {
+            console.error('语音输入识别错误：', event.error);
+            if (event.error === 'network') {
+                alert("语音识别网络连接超时 (Chrome 原生 WebSpeech 依赖网络服务)。您可以直接在文本框打字发送消息！");
+            } else if (event.error === 'not-allowed') {
+                alert("无法获取麦克风权限，请检查浏览器网页权限设置。");
+            }
+        };
+
+        recognition.onend = function() {
+            isListening = false;
+            document.getElementById('mic-icon').className = 'bi bi-mic';
+            document.getElementById('speech-status').classList.add('d-none');
+        };
+
+        recognition.start();
+    }
+
+
+</script>
+{% endblock %}

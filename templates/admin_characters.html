@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI陪伴人设配置 - 运维后台</title>
+    <!-- 引用本地库 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .admin-nav {
+            background-color: #0f172a;
+            border-bottom: 2px solid #0284c7;
+        }
+        .admin-nav .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .admin-nav .nav-link:hover, .admin-nav .nav-link.active {
+            color: #ffffff;
+        }
+        .card-custom {
+            border-radius: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s;
+        }
+        .card-custom:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 后台统一导航 -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav py-2 mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-shield-fill-check text-info me-2"></i>
+                解忧杂货铺 · 管理后台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="adminNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>数据看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill me-1"></i>用户账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active me-3" href="{{ url_for('admin_characters') }}"><i class="bi bi-robot me-1"></i>智能体人设配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_posts') }}"><i class="bi bi-shield-exclamation me-1"></i>树洞安全治理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_sensitive') }}"><i class="bi bi-spellcheck me-1"></i>敏感词维护</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_announcements') }}"><i class="bi bi-megaphone-fill me-1"></i>校园公告发布</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_logs') }}"><i class="bi bi-journal-text me-1"></i>操作审计日志</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-info me-2" href="{{ url_for('chat') }}"><i class="bi bi-reply"></i> 前往学生端</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-danger px-3" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体容器 -->
+    <main class="container mb-5">
+        <!-- 页面标题与新建按钮 -->
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6 col-sm-12">
+                <h4 class="fw-bold mb-1"><i class="bi bi-robot me-2"></i>AI 陪伴角色人设配置</h4>
+                <p class="text-secondary small mb-0">动态增添、修改或下架学生聊天界面上的 AI 智能体，精细定制其 Prompt 提示词与大模型调用参数</p>
+            </div>
+            <div class="col-md-6 col-sm-12 text-md-end mt-3 mt-md-0">
+                <button class="btn btn-accent btn-sm shadow-sm" onclick="openAddModal()">
+                    <i class="bi bi-plus-circle-fill me-1"></i> 新建陪伴角色
+                </button>
+            </div>
+        </div>
+
+        <!-- 提示栏 -->
+        <div class="mb-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show small py-2" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- 智能体流 -->
+        <div class="row g-3">
+            {% if roles %}
+                {% for role in roles %}
+                    <div class="col-md-6">
+                        <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; font-size: 1.3rem;">
+                                            {{ '👩‍💼' if role.gender == 'female' else '👨‍💼' }}
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-0">{{ role.name }}</h6>
+                                            <small class="text-muted">标识键: <code>{{ role.role_key }}</code></small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border small">
+                                        {{ '女声' if role.gender == 'female' else '男声' }}
+                                    </span>
+                                </div>
+                                
+                                <div class="bg-light p-3 rounded mb-3 small text-secondary" style="min-height: 80px; font-family: monospace;">
+                                    <strong>系统 Prompt：</strong><br>
+                                    {{ role.prompt | truncate(150) }}
+                                </div>
+                                
+                                <div class="row g-2 mb-3 small text-muted">
+                                    <div class="col-6">
+                                        <i class="bi bi-thermometer-half text-danger me-1"></i>温和度 (Temp): <strong>{{ role.temperature }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <i class="bi bi-chat-text text-primary me-1"></i>字数上限: <strong>{{ role.max_words }} 字</strong>
+                                    </div>
+                                    <div class="col-12 text-truncate">
+                                        <i class="bi bi-volume-up text-success me-1"></i>分配音色: <code>{{ role.voice }}</code>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end border-top border-light pt-3 gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal({{ role.id }}, '{{ role.role_key }}', '{{ role.name }}', '{{ role.gender }}', '{{ role.voice }}', `{{ role.prompt }}`, {{ role.temperature }}, {{ role.max_words }})">
+                                    <i class="bi bi-pencil-fill"></i> 修改配置
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCharacter({{ role.id }}, '{{ role.name }}')">
+                                    <i class="bi bi-trash-fill"></i> 下架角色
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="card card-custom p-5 text-center text-muted">
+                        <i class="bi bi-robot" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3 fw-semibold">暂无配置角色</h5>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- 配置模态弹窗 -->
+    <div class="modal fade" id="charModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 card-custom">
+                <form action="{{ url_for('admin_characters_save') }}" method="POST">
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title fw-bold" id="modal-title">新建陪伴人设</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="char-id" name="id">
+                        
+                        <div class="row g-3">
+                            <!-- 角色名 -->
+                            <div class="col-md-6">
+                                <label for="name" class="form-label small fw-semibold text-secondary">角色展示名称</label>
+                                <input type="text" class="form-control form-control-sm" id="name" name="name" placeholder="例如: 温柔倾听者" required>
+                            </div>
+                            <!-- 标识键 -->
+                            <div class="col-md-6">
+                                <label for="role_key" class="form-label small fw-semibold text-secondary">角色标识键 (唯一 Key)</label>
+                                <input type="text" class="form-control form-control-sm" id="role_key" name="role_key" placeholder="例如: warm_listener" required>
+                            </div>
+                            
+                            <!-- 性别 -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary d-block">性别分配</label>
+                                <div class="form-check form-check-inline mt-1">
+                                    <input class="form-check-input" type="radio" name="gender" id="gender-female" value="female" checked>
+                                    <label class="form-check-label small" for="gender-female">女性角色</label>
+                                </div>
+                                <div class="form-check form-check-inline mt-1">
+                                    <input class="form-check-input" type="radio" name="gender" id="gender-male" value="male">
+                                    <label class="form-check-label small" for="gender-male">男性角色</label>
+                                </div>
+                            </div>
+                            
+                            <!-- 音色分配 -->
+                            <div class="col-md-6">
+                                <label for="voice" class="form-label small fw-semibold text-secondary">TTS 默认音色分配</label>
+                                <select class="form-select form-select-sm" id="voice" name="voice">
+                                    <option value="zh-CN-XiaoxiaoNeural" selected>zh-CN-XiaoxiaoNeural (温柔女声)</option>
+                                    <option value="zh-CN-YunjianNeural">zh-CN-YunjianNeural (理智男声)</option>
+                                    <option value="zh-CN-YunxiNeural">zh-CN-YunxiNeural (阳光男声)</option>
+                                    <option value="zh-CN-XiaoyiNeural">zh-CN-XiaoyiNeural (活泼女声)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 温和度 -->
+                            <div class="col-md-6">
+                                <label for="temperature" class="form-label small fw-semibold text-secondary">API 创造温和度 (Temperature)</label>
+                                <div class="d-flex align-items-center">
+                                    <input type="range" class="form-range flex-grow-1 me-3" id="temperature" name="temperature" min="0.1" max="1.0" step="0.1" value="0.7" oninput="document.getElementById('temp-val').innerText = this.value">
+                                    <span class="badge bg-secondary" id="temp-val">0.7</span>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.65rem;">数值越高回复越柔和感性且富于变化，越低越严谨稳定。</div>
+                            </div>
+                            
+                            <!-- 字数限制 -->
+                            <div class="col-md-6">
+                                <label for="max_words" class="form-label small fw-semibold text-secondary">单次回复最大字数限制</label>
+                                <input type="number" class="form-control form-control-sm" id="max_words" name="max_words" min="10" max="300" value="80" required>
+                            </div>
+                            
+                            <!-- 提示词 -->
+                            <div class="col-12">
+                                <label for="prompt" class="form-label small fw-semibold text-secondary">AI 底层人设提示词 (System Prompt)</label>
+                                <textarea class="form-control" id="prompt" name="prompt" rows="5" placeholder="配置大语言模型的底层角色 prompt 定义..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-sm btn-accent px-4 fw-semibold">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        let charModal = null;
+        document.addEventListener("DOMContentLoaded", function() {
+            charModal = new bootstrap.Modal(document.getElementById('charModal'));
+        });
+
+        // 新建角色
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = "新建陪伴角色人设";
+            document.getElementById('char-id').value = "";
+            document.getElementById('role_key').value = "";
+            document.getElementById('role_key').disabled = false;
+            document.getElementById('name').value = "";
+            document.getElementById('gender-female').checked = true;
+            document.getElementById('voice').value = "zh-CN-XiaoxiaoNeural";
+            document.getElementById('temperature').value = 0.7;
+            document.getElementById('temp-val').innerText = "0.7";
+            document.getElementById('max_words').value = 80;
+            document.getElementById('prompt').value = "";
+            
+            charModal.show();
+        }
+
+        // 修改角色
+        function openEditModal(id, key, name, gender, voice, prompt, temp, maxWords) {
+            document.getElementById('modal-title').innerText = "修改智能体配置";
+            document.getElementById('char-id').value = id;
+            document.getElementById('role_key').value = key;
+            document.getElementById('role_key').disabled = true; // 编辑时不允许修改 key 键，防止上下文关系断档
+            document.getElementById('name').value = name;
+            
+            if (gender === 'female') {
+                document.getElementById('gender-female').checked = true;
+            } else {
+                document.getElementById('gender-male').checked = true;
+            }
+            
+            document.getElementById('voice').value = voice;
+            document.getElementById('temperature').value = temp;
+            document.getElementById('temp-val').innerText = temp;
+            document.getElementById('max_words').value = maxWords;
+            document.getElementById('prompt').value = prompt;
+            
+            charModal.show();
+        }
+
+        // 删除/下架角色
+        function deleteCharacter(charId, charName) {
+            if (!confirm(`确定要彻底下架并删除陪伴角色【${charName}】吗？此操作不可逆。`)) return;
+            
+            fetch(`/admin/characters/delete/${charId}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('删除失败，请重试');
+            });
+        }
+    </script>
+</body>
+</html>

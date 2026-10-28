@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作审计日志 - 运维后台</title>
+    <!-- 引用本地库 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .admin-nav {
+            background-color: #0f172a;
+            border-bottom: 2px solid #0284c7;
+        }
+        .admin-nav .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .admin-nav .nav-link:hover, .admin-nav .nav-link.active {
+            color: #ffffff;
+        }
+        .card-custom {
+            border-radius: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 后台统一导航 -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav py-2 mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-shield-fill-check text-info me-2"></i>
+                解忧杂货铺 · 管理后台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="adminNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>数据看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill me-1"></i>用户账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_characters') }}"><i class="bi bi-robot me-1"></i>智能体人设配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_posts') }}"><i class="bi bi-shield-exclamation me-1"></i>树洞安全治理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_sensitive') }}"><i class="bi bi-spellcheck me-1"></i>敏感词维护</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_announcements') }}"><i class="bi bi-megaphone-fill me-1"></i>校园公告发布</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active me-3" href="{{ url_for('admin_logs') }}"><i class="bi bi-journal-text me-1"></i>操作审计日志</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-info me-2" href="{{ url_for('chat') }}"><i class="bi bi-reply"></i> 前往学生端</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-danger px-3" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体容器 -->
+    <main class="container">
+        <!-- 页面标题 & 导出按钮 -->
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6 col-sm-12">
+                <h4 class="fw-bold mb-1"><i class="bi bi-journal-text me-2"></i>系统运维审计日志</h4>
+                <p class="text-secondary small mb-0">系统自动记录的管理员敏感后台操作，日志记录合规透明，支持安全搜索审计与下载导出</p>
+            </div>
+            <div class="col-md-6 col-sm-12 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('admin_logs_export', action=current_action, q=q) }}" class="btn btn-success text-white btn-sm shadow-sm">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> 导出筛选日志为 CSV 报表
+                </a>
+            </div>
+        </div>
+        
+        <!-- 日志多功能高级检索过滤器 -->
+        <div class="card card-custom p-3 mb-4 shadow-sm">
+            <form action="{{ url_for('admin_logs') }}" method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="q" class="form-label small text-secondary fw-semibold">关键字搜索 (操作人/目标用户/日志正文)</label>
+                    <input type="text" class="form-control form-control-sm" id="q" name="q" value="{{ q }}" placeholder="搜索管理员、关键字...">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="action" class="form-label small text-secondary fw-semibold">操作动作分类筛选</label>
+                    <select class="form-select form-select-sm" id="action" name="action">
+                        <option value="all" {% if current_action == 'all' %}selected{% endif %}>全部动作</option>
+                        {% for type in action_types %}
+                            <option value="{{ type }}" {% if current_action == type %}selected{% endif %}>{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-5 d-flex gap-2">
+                    <button type="submit" class="btn btn-accent btn-sm px-4 flex-fill"><i class="bi bi-funnel-fill me-1"></i>应用过滤</button>
+                    {% if q or current_action != 'all' %}
+                        <a href="{{ url_for('admin_logs') }}" class="btn btn-outline-secondary btn-sm px-3 flex-fill text-center">重置检索</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- 审计日志列表 -->
+        <div class="card card-custom p-4">
+            {% if logs %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr class="small text-secondary">
+                                <th style="width: 80px;">日志 ID</th>
+                                <th style="width: 130px;">执行管理员</th>
+                                <th style="width: 140px;">操作类型</th>
+                                <th style="width: 130px;">目标对象</th>
+                                <th>详细说明</th>
+                                <th style="width: 180px;">记录时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                                <tr>
+                                    <td class="small text-secondary fw-semibold">#{{ log.id }}</td>
+                                    <td class="fw-bold"><i class="bi bi-person-badge-fill text-info me-1"></i>{{ log.admin_username }}</td>
+                                    <td>
+                                        {% if 'BAN' in log.action_type %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 px-2 py-1">{{ log.action_type }}</span>
+                                        {% elif 'RESET' in log.action_type %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning border-opacity-25 px-2 py-1">{{ log.action_type }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success-subtle text-success border border-success border-opacity-25 px-2 py-1">{{ log.action_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-semibold">@{{ log.target }}</td>
+                                    <td class="small text-secondary" style="max-width: 350px;">{{ log.details }}</td>
+                                    <td class="small text-muted">{{ log.created_at }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-clipboard-x" style="font-size: 3rem;"></i>
+                    <h6 class="mt-3 fw-semibold">没有找到相符的操作审计日志</h6>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

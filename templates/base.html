@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}解忧杂货铺 - 校园语音陪伴与树洞{% endblock %}</title>
+    <!-- 引入本地 Bootstrap 5 样式 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- 引入本地 Bootstrap 图标 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <!-- 引入本地自定义多主题样式 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="theme-{{ session.get('theme', 'warm') }}">
+
+    <!-- 全局导航栏 -->
+    <nav class="navbar navbar-expand-lg custom-navbar py-2 mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="{{ url_for('index') }}">
+                <i class="bi bi-heart-pulse-fill text-danger me-2"></i>
+                解忧杂货铺
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list text-white"></i>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    {% if session.get('user_id') %}
+                        <!-- 语音陪伴 -->
+                        <li class="nav-item">
+                            <a class="nav-link me-3 fw-semibold" href="{{ url_for('chat') }}">
+                                <i class="bi bi-chat-dots-fill me-1"></i>语音陪伴
+                            </a>
+                        </li>
+                        <!-- 树洞广场 -->
+                        <li class="nav-item">
+                            <a class="nav-link me-3 fw-semibold" href="{{ url_for('treehole') }}">
+                                <i class="bi bi-compass-fill me-1"></i>树洞广场
+                            </a>
+                        </li>
+                        <!-- 个人收件箱 -->
+                        <li class="nav-item">
+                            <a class="nav-link me-3 fw-semibold position-relative" href="{{ url_for('mailbox') }}">
+                                <i class="bi bi-envelope-heart-fill me-1"></i>收件箱
+                                {% if session.get('unread_letters', 0) > 0 %}
+                                    <span class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                        {{ session.get('unread_letters') }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <span class="nav-link me-3 text-secondary small">
+                                <i class="bi bi-person-check-fill me-1"></i>{{ session.get('nickname') }}
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link me-3 fw-semibold" href="#" onclick="drawHealingQuote(); return false;">
+                                <i class="bi bi-magic me-1 text-accent" style="color: var(--accent-color);"></i>解忧签
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link me-3" href="{{ url_for('profile') }}">
+                                <i class="bi bi-gear-fill me-1"></i>个人中心
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-sm btn-outline-danger px-3" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right me-1"></i>注销
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link me-2" href="{{ url_for('login') }}">登录</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-sm btn-accent px-3" href="{{ url_for('register') }}">立即注册</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 消息提示区域 -->
+    <div class="container mb-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- 主要内容容器 -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 底部页脚 -->
+    <footer class="container text-center py-4 my-5 border-top text-secondary small">
+        <p>© 2026 解忧杂货铺 - 倾听您的心声，陪伴您的每一天</p>
+    </footer>
+
+    <!-- 解忧签模态框 -->
+    <div class="modal fade" id="healingQuoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 text-center shadow-lg" style="background: linear-gradient(135deg, #fffcf5 0%, #fff4e0 100%); border-radius: 16px;">
+                <div class="modal-header border-0 pb-0 justify-content-end">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-2" style="font-size: 3rem; transform: rotate(-10deg);">🔮</div>
+                    <h4 class="fw-bold mb-3" style="color: #b45309; font-family: 'STKaiti', 'KaiTi', serif;">今日解忧灵签</h4>
+                    <hr style="border-top: 2px dashed #d97706; opacity: 0.3;" class="my-3">
+                    <p class="fs-5 fw-normal text-dark px-3 py-2" id="healing-quote-text" style="line-height: 1.6; min-height: 80px; font-family: 'STKaiti', 'KaiTi', serif;">
+                        正在为您向杂货铺祈签...
+                    </p>
+                    <hr style="border-top: 2px dashed #d97706; opacity: 0.3;" class="my-3">
+                    <div class="small text-secondary italic">—— 寄予你今日份的温柔</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入本地 Bootstrap Bundle JS -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        function drawHealingQuote() {
+            const modalEl = document.getElementById('healingQuoteModal');
+            const modalText = document.getElementById('healing-quote-text');
+            modalText.innerText = "正在为您向杂货铺祈签...";
+            
+            const bootstrapModal = new bootstrap.Modal(modalEl);
+            bootstrapModal.show();
+            
+            fetch('/api/healing-quote')
+                .then(res => res.json())
+                .then(data => {
+                    setTimeout(() => {
+                        modalText.innerText = data.quote;
+                    }, 600);
+                })
+                .catch(err => {
+                    modalText.innerText = "愿你被世界温柔以待，生活不必完美，只要我们心存希望，日子就能闪闪发光。";
+                });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

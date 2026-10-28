@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}收件箱 - 解忧杂货铺{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card custom-card p-4 shadow-lg">
+            <h3 class="fw-bold mb-3 d-flex align-items-center">
+                <i class="bi bi-envelope-open-heart-fill text-danger me-2"></i>
+                我的收件箱
+            </h3>
+            <p class="text-secondary small mb-4">
+                当您在树洞广场发布倾吐负面情绪的动态后，“解忧杂货铺店员”会默默地读信，并在后台为您专门撰写一封手写体温度的来信，投递到此处。
+            </p>
+            
+            {% if letters %}
+                <div class="list-group list-group-flush border-top border-color">
+                    {% for letter in letters %}
+                        <div class="list-group-item bg-transparent py-3 px-2 border-bottom border-color d-flex justify-content-between align-items-center letter-item" style="cursor: pointer;">
+                            <div class="d-flex align-items-center">
+                                <span class="badge rounded-circle bg-danger bg-opacity-10 text-danger p-2 me-3">
+                                    <i class="bi bi-envelope-fill" style="font-size: 1.1rem;"></i>
+                                </span>
+                                <div>
+                                    <h6 class="mb-1 fw-bold {% if letter.is_read == 0 %}text-primary{% else %}text-dark{% endif %} letter-title">
+                                        {{ letter.title }}
+                                        {% if letter.is_read == 0 %}
+                                            <span class="badge bg-danger ms-2" style="font-size: 0.55rem; padding: 2px 4px;">NEW</span>
+                                        {% endif %}
+                                    </h6>
+                                    <p class="mb-0 text-muted small text-truncate" style="max-width: 500px;">{{ letter.content }}</p>
+                                    
+                                    <!-- 安全隐蔽容器，防止 Javascript 因内容换行/引号报错 -->
+                                    <div class="d-none letter-full-content">{{ letter.content }}</div>
+                                    <div class="d-none letter-full-time">{{ letter.created_at }}</div>
+                                </div>
+                            </div>
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ letter.created_at }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-5 my-3">
+                    <i class="bi bi-mailbox" style="font-size: 3rem; color: var(--accent-color);"></i>
+                    <h5 class="mt-3 fw-semibold">邮箱暂时空空</h5>
+                    <p class="small mt-1">您还没有收到店员的来信。当心情低落时，不妨去树洞广场写下困扰哦。</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 信件详情弹窗 (Modal) -->
+<div class="modal fade" id="letterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 bg-transparent">
+            <div class="modal-body p-0">
+                <div class="letter-paper">
+                    <!-- 信件抬头 -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-10">
+                        <span class="fw-bold" style="font-family: Georgia, serif; font-size: 1.2rem;">解忧杂货铺 · 信札</span>
+                        <small class="text-muted" id="modal-letter-time"></small>
+                    </div>
+                    
+                    <!-- 信件主体 -->
+                    <h5 class="fw-bold mb-3 text-dark" id="modal-letter-title"></h5>
+                    <div class="lh-lg text-secondary mb-4" id="modal-letter-content" style="text-indent: 2em; text-align: justify; font-size: 1.05rem; white-space: pre-wrap;">
+                        <!-- 信件正文内容 -->
+                    </div>
+                    
+                    <!-- 信件落款 -->
+                    <div class="text-end mt-5">
+                        <p class="mb-1 fw-bold">默默关怀你的：解忧杂货铺店员</p>
+                        <p class="text-muted small">敬上</p>
+                    </div>
+                    
+                    <!-- 关闭按钮 -->
+                    <div class="text-center mt-4">
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">合上信件</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let letterModal = null;
+    document.addEventListener("DOMContentLoaded", function() {
+        letterModal = new bootstrap.Modal(document.getElementById('letterModal'));
+        
+        // 使用 DOM 事件监听绑定，避免模板字符串换行等引发的 JS 语法报错
+        document.querySelectorAll('.letter-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const title = this.querySelector('.letter-title').childNodes[0].textContent.trim();
+                const content = this.querySelector('.letter-full-content').textContent.trim();
+                const time = this.querySelector('.letter-full-time').textContent.trim();
+                
+                openLetterModal(title, content, time);
+            });
+        });
+    });
+
+    function openLetterModal(title, content, timeStr) {
+        document.getElementById('modal-letter-title').innerText = title;
+        document.getElementById('modal-letter-content').textContent = content;
+        document.getElementById('modal-letter-time').innerText = timeStr;
+        letterModal.show();
+    }
+</script>
+{% endblock %}

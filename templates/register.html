@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}新用户注册 - 解忧杂货铺{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-sm-8">
+        <div class="card custom-card p-4 shadow-lg">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus-fill text-accent" style="font-size: 3rem; color: var(--accent-color);"></i>
+                <h3 class="mt-2 fw-bold">开启心灵之旅</h3>
+                <p class="text-secondary small">注册属于您的专属账户，您的隐私将被严格匿名保护</p>
+            </div>
+            
+            <form action="{{ url_for('register') }}" method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label small fw-semibold">用户名</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-color"><i class="bi bi-user-fill-dash text-secondary">@</i></span>
+                        <input type="text" class="form-control border-start-0 border-color" id="username" name="username" placeholder="仅用于系统标识，不公开展示" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label small fw-semibold">电子邮箱</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-color"><i class="bi bi-envelope text-secondary"></i></span>
+                        <input type="email" class="form-control border-start-0 border-color" id="email" name="email" placeholder="example@domain.com" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label small fw-semibold">设置密码</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-color"><i class="bi bi-lock text-secondary"></i></span>
+                        <input type="password" class="form-control border-start-0 border-color" id="password" name="password" placeholder="请输入密码" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="confirm_password" class="form-label small fw-semibold">确认密码</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-color"><i class="bi bi-shield-check text-secondary"></i></span>
+                        <input type="password" class="form-control border-start-0 border-color" id="confirm_password" name="confirm_password" placeholder="请再次输入密码" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-accent w-100 py-2 fw-semibold">
+                    <i class="bi bi-check-circle-fill me-1"></i> 完成注册
+                </button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <span class="text-secondary small">已有账号？</span>
+                <a href="{{ url_for('login') }}" class="small fw-semibold" style="color: var(--accent-color);">返回登录</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}用户登录 - 解忧杂货铺{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-sm-8">
+        <div class="card custom-card p-4 shadow-lg">
+            <div class="text-center mb-4">
+                <i class="bi bi-door-open-fill text-accent" style="font-size: 3rem; color: var(--accent-color);"></i>
+                <h3 class="mt-2 fw-bold">欢迎光临杂货铺</h3>
+                <p class="text-secondary small">在这里，您可以倾诉任何内心的焦虑与困惑</p>
+            </div>
+            
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="mb-3">
+                    <label for="account" class="form-label small fw-semibold">用户名 / 电子邮箱</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-color"><i class="bi bi-person text-secondary"></i></span>
+                        <input type="text" class="form-control border-start-0 border-color" id="account" name="account" placeholder="请输入您的账号" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="form-label small fw-semibold">密码</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-color"><i class="bi bi-lock text-secondary"></i></span>
+                        <input type="password" class="form-control border-start-0 border-color" id="password" name="password" placeholder="请输入密码" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-accent w-100 py-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> 登录
+                </button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <span class="text-secondary small">还没有账号？</span>
+                <a href="{{ url_for('register') }}" class="small fw-semibold" style="color: var(--accent-color);">立即注册</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

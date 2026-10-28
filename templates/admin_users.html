@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园用户账号管理 - 运维后台</title>
+    <!-- 引用本地库 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .admin-nav {
+            background-color: #0f172a;
+            border-bottom: 2px solid #0284c7;
+        }
+
+        .admin-nav .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .admin-nav .nav-link:hover,
+        .admin-nav .nav-link.active {
+            color: #ffffff;
+        }
+
+        .card-custom {
+            border-radius: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 后台统一导航 -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav py-2 mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-shield-fill-check text-info me-2"></i>
+                解忧杂货铺 · 管理后台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="adminNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>数据看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active me-3" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill me-1"></i>用户账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_characters') }}"><i class="bi bi-robot me-1"></i>智能体人设配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_posts') }}"><i class="bi bi-shield-exclamation me-1"></i>树洞安全治理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_sensitive') }}"><i class="bi bi-spellcheck me-1"></i>敏感词维护</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_announcements') }}"><i class="bi bi-megaphone-fill me-1"></i>校园公告发布</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_logs') }}"><i class="bi bi-journal-text me-1"></i>操作审计日志</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-info me-2" href="{{ url_for('chat') }}"><i class="bi bi-reply"></i> 前往学生端</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-danger px-3" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体容器 -->
+    <main class="container">
+        <!-- 页面标题 & 筛选 -->
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6 col-sm-12">
+                <h4 class="fw-bold mb-1"><i class="bi bi-people me-2"></i>学生用户账号管理</h4>
+                <p class="text-secondary small mb-0">提供对注册学生基本状态的安全审计、密码重置、账户禁用等运维功能</p>
+            </div>
+            <div class="col-md-6 col-sm-12 text-md-end mt-3 mt-md-0">
+                <div class="btn-group btn-group-sm shadow-sm" role="group">
+                    <a href="{{ url_for('admin_users', status='all') }}"
+                        class="btn btn-outline-secondary {% if current_filter == 'all' %}active{% endif %}">全部账户</a>
+                    <a href="{{ url_for('admin_users', status='active') }}"
+                        class="btn btn-outline-secondary {% if current_filter == 'active' %}active{% endif %}">已启用</a>
+                    <a href="{{ url_for('admin_users', status='disabled') }}"
+                        class="btn btn-outline-secondary {% if current_filter == 'disabled' %}active{% endif %}">已禁用</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提示栏 -->
+        <div class="mb-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show small py-2" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- 账号列表卡片 -->
+        <div class="card card-custom p-4">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="small text-secondary">
+                            <th>用户 ID</th>
+                            <th>用户名 (系统凭证)</th>
+                            <th>聊天昵称</th>
+                            <th>电子邮箱</th>
+                            <th>账号状态</th>
+                            <th class="text-end">运维管理操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td class="fw-semibold text-secondary small">#{{ student.id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if student.avatar %}
+                                    <img src="{{ student.avatar }}" alt="头像" class="rounded-circle me-2"
+                                        style="width: 28px; height: 28px; object-fit: cover;">
+                                    {% else %}
+                                    <span class="badge bg-secondary rounded-circle me-2"
+                                        style="width: 28px; height: 28px; line-height: 18px; font-size: 0.85rem;">🎓</span>
+                                    {% endif %}
+                                    <span class="fw-bold">{{ student.username }}</span>
+                                </div>
+                            </td>
+                            <td>{{ student.nickname or '-' }}</td>
+                            <td class="small text-muted">{{ student.email }}</td>
+                            <td>
+                                {% if student.is_active == 1 %}
+                                <span
+                                    class="badge bg-success-subtle text-success border border-success border-opacity-25 px-2 py-1"
+                                    id="status-badge-{{ student.id }}">启用中</span>
+                                {% else %}
+                                <span
+                                    class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 px-2 py-1"
+                                    id="status-badge-{{ student.id }}">已禁用</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <button
+                                    class="btn btn-sm {% if student.is_active == 1 %}btn-outline-danger{% else %}btn-success text-white{% endif %} me-2"
+                                    id="toggle-btn-{{ student.id }}" onclick="toggleUserStatus({{ student.id }}, this)">
+                                    {% if student.is_active == 1 %}
+                                    <i class="bi bi-lock-fill"></i> 禁用账户
+                                    {% else %}
+                                    <i class="bi bi-unlock-fill"></i> 启用账户
+                                    {% endif %}
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary"
+                                    onclick="resetUserPassword({{ student.id }}, '{{ student.username }}')">
+                                    <i class="bi bi-arrow-clockwise"></i> 重置密码
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-person-x" style="font-size: 3rem;"></i>
+                <h6 class="mt-3 fw-semibold">未找到匹配的校园学生账号</h6>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- JS 逻辑 -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        // 异步启用/禁用账号状态
+        function toggleUserStatus(userId, btnEl) {
+            if (!confirm('您确定要变更该学生的账号状态吗？被禁用的学生将无法登录前台系统。')) return;
+
+            fetch(`/admin/users/toggle/${userId}`, {
+                method: 'POST'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const badge = document.getElementById('status-badge-' + userId);
+                        if (data.new_active === 1) {
+                            badge.className = "badge bg-success-subtle text-success border border-success border-opacity-25 px-2 py-1";
+                            badge.innerText = "启用中";
+                            btnEl.className = "btn btn-sm btn-outline-danger me-2";
+                            btnEl.innerHTML = '<i class="bi bi-lock-fill"></i> 禁用账户';
+                        } else {
+                            badge.className = "badge bg-danger-subtle text-danger border border-danger border-opacity-25 px-2 py-1";
+                            badge.innerText = "已禁用";
+                            btnEl.className = "btn btn-sm btn-success text-white me-2";
+                            btnEl.innerHTML = '<i class="bi bi-unlock-fill"></i> 启用账户';
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('操作失败，请重试');
+                });
+        }
+
+        // 异步重置学生密码为 12345656
+        function resetUserPassword(userId, username) {
+            if (!confirm(`确定要重置学生【${username}】的密码吗？重置后密码将变更为默认的“12345656”。`)) return;
+
+            fetch(`/admin/users/reset_pwd/${userId}`, {
+                method: 'POST'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('重置失败');
+                });
+        }
+    </script>
+</body>
+
+</html>

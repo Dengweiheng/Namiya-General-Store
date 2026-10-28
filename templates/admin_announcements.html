@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园公告发布 - 运维后台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .admin-nav {
+            background-color: #0f172a;
+            border-bottom: 2px solid #0284c7;
+        }
+        .admin-nav .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .admin-nav .nav-link:hover, .admin-nav .nav-link.active {
+            color: #ffffff;
+        }
+        .card-custom {
+            border-radius: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s;
+        }
+        .card-custom:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 后台统一导航 -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav py-2 mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-shield-fill-check text-info me-2"></i>
+                解忧杂货铺 · 管理后台
+            </a>
+            <div class="collapse navbar-collapse justify-content-end" id="adminNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>数据看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill me-1"></i>用户账号管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_characters') }}"><i class="bi bi-robot me-1"></i>智能体人设配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_posts') }}"><i class="bi bi-shield-exclamation me-1"></i>树洞安全治理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_sensitive') }}"><i class="bi bi-spellcheck me-1"></i>敏感词维护</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active me-3" href="{{ url_for('admin_announcements') }}"><i class="bi bi-megaphone-fill me-1"></i>校园公告发布</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link me-3" href="{{ url_for('admin_logs') }}"><i class="bi bi-journal-text me-1"></i>操作审计日志</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-info me-2" href="{{ url_for('chat') }}"><i class="bi bi-reply"></i> 前往学生端</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-danger px-3" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体 -->
+    <main class="container mb-5">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6 col-sm-12">
+                <h4 class="fw-bold mb-1"><i class="bi bi-megaphone me-2"></i>校园通知公告发布</h4>
+                <p class="text-secondary small mb-0">发布校园活动通知、心理政策等公告，支持图片封面、置顶高亮、以及定时到期自动下线隐藏</p>
+            </div>
+            <div class="col-md-6 col-sm-12 text-md-end mt-3 mt-md-0">
+                <button class="btn btn-accent btn-sm shadow-sm" onclick="openAddModal()">
+                    <i class="bi bi-plus-circle-fill me-1"></i> 新发布公告
+                </button>
+            </div>
+        </div>
+
+        <!-- 提示栏 -->
+        <div class="mb-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show small py-2" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- 公告列表 -->
+        <div class="row g-3">
+            {% if announcements %}
+                {% for ann in announcements %}
+                    <div class="col-md-6" id="ann-card-{{ ann.id }}">
+                        <div class="card card-custom p-3 h-100 d-flex flex-row gap-3">
+                            <div class="d-none d-sm-block flex-shrink-0" style="width: 120px; height: 120px;">
+                                <img src="{{ ann.cover_image or '/static/css/default-banner.jpg' }}" alt="封面" class="rounded border" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="flex-grow-1 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="fw-bold text-dark mb-1">
+                                            {% if ann.is_pinned == 1 %}
+                                                <span class="badge bg-danger p-1 me-1" style="font-size: 0.55rem;"><i class="bi bi-pin-angle-fill"></i> 置顶</span>
+                                            {% endif %}
+                                            <span class="ann-title-text">{{ ann.title }}</span>
+                                        </h6>
+                                    </div>
+                                    <p class="text-secondary small mb-2 text-truncate-3" style="max-height: 54px; overflow: hidden; line-height: 1.5;">
+                                        {{ ann.content | striptags }}
+                                    </p>
+                                    <div style="font-size: 0.7rem; color: #94a3b8;">
+                                        <div><i class="bi bi-clock me-1"></i>发布: {{ ann.created_at }}</div>
+                                        <div><i class="bi bi-calendar-x me-1"></i>下线: {{ ann.expire_time }}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 隐蔽媒介容纳真实数据，免去 JS 反引号和换行报错 -->
+                                <div class="d-none ann-raw-content">{{ ann.content }}</div>
+                                <div class="d-none ann-raw-pinned">{{ ann.is_pinned }}</div>
+                                <div class="d-none ann-raw-expire">{{ ann.expire_time }}</div>
+                                <div class="d-none ann-raw-cover">{{ ann.cover_image }}</div>
+                                
+                                <div class="d-flex justify-content-end gap-2 pt-2 border-top border-light mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary edit-ann-btn" data-id="{{ ann.id }}">
+                                        <i class="bi bi-pencil-fill"></i> 修改
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement({{ ann.id }}, '{{ ann.title }}')">
+                                        <i class="bi bi-trash-fill"></i> 删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="card card-custom p-5 text-center text-muted">
+                        <i class="bi bi-megaphone" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3 fw-semibold">暂无校园公告</h5>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- 公告模态框 -->
+    <div class="modal fade" id="annModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 card-custom">
+                <form action="{{ url_for('admin_announcements_save') }}" method="POST" enctype="multipart/form-data">
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title fw-bold" id="modal-title">新发布校园公告</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="ann-id" name="id">
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="title" class="form-label small fw-semibold text-secondary">公告/活动标题</label>
+                                <input type="text" class="form-control form-control-sm" id="title" name="title" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="cover_image" class="form-label small fw-semibold text-secondary">上传封面图片文件</label>
+                                <input type="file" class="form-control form-control-sm" id="cover_image" name="cover_image" accept="image/*">
+                                <div class="text-muted" style="font-size: 0.65rem;">支持 png, jpg, jpeg 格式，不选择则保留原图片</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="expire_time" class="form-label small fw-semibold text-secondary">设定下线失效时间</label>
+                                <input type="text" class="form-control form-control-sm" id="expire_time" name="expire_time" placeholder="格式: YYYY-MM-DD HH:MM:SS" required>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="is_pinned" name="is_pinned">
+                                    <label class="form-check-label small fw-bold text-danger" for="is_pinned">开启置顶显示优先（会在前台幻灯片显示）</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="content" class="form-label small fw-semibold text-secondary">通知正文内容</label>
+                                <textarea class="form-control" id="content" name="content" rows="6" placeholder="请在此处撰写公告正文..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-sm btn-accent px-4 fw-semibold">确认并发布</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        let annModal = null;
+        document.addEventListener("DOMContentLoaded", function() {
+            annModal = new bootstrap.Modal(document.getElementById('annModal'));
+            
+            // 绑定修改按钮点击事件，防止特殊字符或多行引起 JS 崩溃
+            document.querySelectorAll('.edit-ann-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const card = document.getElementById('ann-card-' + id);
+                    const title = card.querySelector('.ann-title-text').textContent.trim();
+                    const content = card.querySelector('.ann-raw-content').textContent.trim();
+                    const isPinned = parseInt(card.querySelector('.ann-raw-pinned').textContent.trim());
+                    const expireTime = card.querySelector('.ann-raw-expire').textContent.trim();
+                    const coverImage = card.querySelector('.ann-raw-cover').textContent.trim();
+                    
+                    openEditModal(id, title, content, isPinned, expireTime, coverImage);
+                });
+            });
+        });
+
+        function getDefaultExpireTime() {
+            const d = new Date();
+            d.setMonth(d.getMonth() + 1);
+            return d.getFullYear() + "-" + 
+                String(d.getMonth() + 1).padStart(2, '0') + "-" + 
+                String(d.getDate()).padStart(2, '0') + " 23:59:59";
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerText = "发布校园心理公告";
+            document.getElementById('ann-id').value = "";
+            document.getElementById('title').value = "";
+            document.getElementById('cover_image').value = "";
+            document.getElementById('expire_time').value = getDefaultExpireTime();
+            document.getElementById('is_pinned').checked = false;
+            document.getElementById('content').value = "";
+            annModal.show();
+        }
+
+        function openEditModal(id, title, content, isPinned, expireTime, coverImage) {
+            document.getElementById('modal-title').innerText = "编辑校园公告通知";
+            document.getElementById('ann-id').value = id;
+            document.getElementById('title').value = title;
+            document.getElementById('cover_image').value = "";
+            document.getElementById('expire_time').value = expireTime;
+            document.getElementById('is_pinned').checked = (isPinned === 1);
+            document.getElementById('content').value = content;
+            annModal.show();
+        }
+
+        function deleteAnnouncement(annId, title) {
+            if (!confirm(`确定要彻底删除校园公告《${title}》吗？`)) return;
+
+            fetch(`/admin/announcements/delete/${annId}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const card = document.getElementById('ann-card-' + annId);
+                    if (card) card.remove();
+                    alert('公告已删除。');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('删除失败');
+            });
+        }
+    </script>
+</body>
+</html>
